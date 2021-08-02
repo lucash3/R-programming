@@ -1,0 +1,49 @@
+Trabalhadores_por_setor <- merge(Q1_m_nTrabalhadores, q1_cnpj_uf_setor_cnae, by = "cnpj")
+
+#mudando para tipo numerico
+Trabalhadores_por_setor[,2:12] <- sapply(Trabalhadores_por_setor[,2:12], as.numeric)
+
+
+#calculando a soma total do numero de trabalhadores "Total_trabalhadores_2018"
+Trabalhadores_por_setor$Total_trabalhadores_2018 <- (Trabalhadores_por_setor$`2018.01`+
+                                                       Trabalhadores_por_setor$`2018.02`+
+                                                       Trabalhadores_por_setor$`2018.03`+
+                                                       Trabalhadores_por_setor$`2018.04`+
+                                                       Trabalhadores_por_setor$`2018.05`+
+                                                       Trabalhadores_por_setor$`2018.06`+
+                                                       Trabalhadores_por_setor$`2018.07`+
+                                                       Trabalhadores_por_setor$`2018.08`+
+                                                       Trabalhadores_por_setor$`2018.09`+
+                                                       Trabalhadores_por_setor$`2018.10`+
+                                                       Trabalhadores_por_setor$`2018.11`)
+
+#calculando a media do numero de trabalhadores
+Trabalhadores_por_setor$Media_trabalhadores_2018 <- ((Trabalhadores_por_setor$Total_trabalhadores_2018)/11)
+
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+#Explorando o faturamento total - numero de trabalhadores por setor
+drop_na(Trabalhadores_por_setor) %>%
+  ggplot(Trabalhadores_por_setor, mapping = aes(fill = setor, y = Media_trabalhadores_2018, x = uf)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(title = "Média de trabalhadores por Setor",
+       y="Numero medio de trabalhadores",
+       x = "Unidade da federaçao")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  coord_flip()
+
+
+
+########### Faturamento e numero de trabalhadores ##############
+
+
+nTrabalhadores_e_Faturamento <- merge(Trabalhadores_por_setor, Analise_fProduto, by = "cnpj")
+
+ggplot(nTrabalhadores_e_Faturamento, aes(x = Media_faturamento_2018, y = Media_trabalhadores_2018, color = setor.x)) + 
+  geom_line()
+
+saveRDS(nTrabalhadores_e_Faturamento, file = "nTrabalhadores.RDS")

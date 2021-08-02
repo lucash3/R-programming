@@ -1,0 +1,879 @@
+install.packages(c("ggplot2", "dplyr", "tidyverse","tidyr","openxlsx", "tidyselect" , "UpSetR", "GGally", "lubridate", "gridExtra"))
+
+
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(openxlsx)
+library(tidyselect)
+library(UpSetR)
+library(GGally)
+library(lubridate)
+library(gridExtra)
+
+## Dataset utilizado: "dados_relatorio.RDS". Projeto: "Brasil mais Produtivo" - IPEA, 2019
+
+########## Elaboracao grafica ##########
+
+#-----------------------------------------------
+
+# Tabela 1: Quantidade de empresas participando do B+P ao final do Questionário 1
+
+#tratamento
+grupos_grafico1 <- dados_relatorio %>%
+  group_by(setor, uf) %>%
+  summarise(media_faturamento2016 = mean(faturamento2016, na.rm = TRUE),
+            media_faturamento2017 = mean(faturamento2017, na.rm = TRUE),
+            media_custo2016 = mean(custo2016, na.rm = T),
+            media_custo2017 = mean(custo2017, na.rm = T),
+            media_ativo2016 = mean(ativo2016, na.rm = T),
+            media_ativo2017 = mean(ativo2017, na.rm = T),
+            media_maquinas2016 = mean(maquinas2016, na.rm = T),
+            media_maquinas2017 = mean(maquinas2017, na.rm = T),
+            media_financiamento2016 = mean(financ2016, na.rm = T),
+            media_financiamento2017 = mean(financ2017, na.rm = T),
+            count = n())
+
+
+
+# Figura 1) Setores por Estado
+
+#Titulo: Setores por estado
+ggplot(grupos_grafico1, aes(fill = setor, y = count, x = uf))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = count), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "", x = "Unidade da federação", y = "Setor")+
+  theme(axis.text.y = element_blank())+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+
+
+## Figura 2) Setores por estado - visao faceta
+#Titulo: Quantidade de empresas participando do B+P
+
+ggplot(grupos_grafico1, aes(fill = setor, y = count, x = uf))+ 
+  geom_bar(stat="identity")+
+  facet_wrap(~setor)+
+  geom_text(aes(label = count), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "", x = "Unidade da federação", y = "Setor")+
+  theme_bw()+
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  scale_fill_grey(start = 0, end = .8)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+#---------------------------------------------
+
+#---------------------------------------------
+
+#  Tabela 2: Porte das empresas participantes do B+P por setor
+
+#tratamento
+grupos_grafico2 <- dados_relatorio %>%
+  group_by(setor, porte) %>%
+  summarise(media_faturamento2016 = mean(faturamento2016, na.rm = TRUE),
+            media_faturamento2017 = mean(faturamento2017, na.rm = TRUE),
+            media_custo2016 = mean(custo2016, na.rm = T),
+            media_custo2017 = mean(custo2017, na.rm = T),
+            media_ativo2016 = mean(ativo2016, na.rm = T),
+            media_ativo2017 = mean(ativo2017, na.rm = T),
+            media_maquinas2016 = mean(maquinas2016, na.rm = T),
+            media_maquinas2017 = mean(maquinas2017, na.rm = T),
+            media_financiamento2016 = mean(financ2016, na.rm = T),
+            media_financiamento2017 = mean(financ2017, na.rm = T),
+            count = n())
+
+
+
+# Figura 3) Porte por setor
+
+#Titulo: Porte das empresas por setor
+ggplot(grupos_grafico2, aes(fill = porte, y = count, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = count), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "", x = "Setor", y = "Porte")+
+  theme(axis.text.y = element_blank())+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .5)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+## Figura 4)   porte de cada setor facetado por estado
+
+#tratamento rapido para contador
+grupos_grafico_porte <- dados_relatorio %>%
+  group_by(setor, porte, uf) %>%
+  summarise(count = n())
+
+
+#Titulo: Porte de cada setor por Estado
+ggplot(grupos_grafico_porte, aes(fill = porte, y = count, x = uf))+ 
+  geom_bar(position="stack", stat="identity")+
+  facet_wrap(~setor)+
+  geom_text(aes(label = count), position=position_stack(0.5), color="white", size=3.5)+
+  coord_flip()+
+  labs(title = "", x = "Unidade da federação", y = "porte")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank())+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .5)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+#------------------------------------------
+
+#------------------------------------------
+
+
+# Tabela 3: Quantidade de trabalhadores das empresas participantes do B+P por setor
+
+#tratamento
+grupos_grafico3 <- dados_relatorio %>%
+  group_by(setor) %>%
+  summarise(trabalhadores_setor = sum(n_trab_2017, na.rm = T),
+            trabalhadores_media = mean(n_trab_2017, na.rm = T),
+            count = n())
+
+
+# Figura 5) Total de trabalhadores por setor
+
+#Titulo: Total de trabalhadores por setor
+ggplot(grupos_grafico3, aes(fill = setor, y = trabalhadores_setor, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = trabalhadores_setor), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "", x = "setor", y = "nº de trabalhadores")+
+  theme(axis.text.y = element_blank())+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .7)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+#---------------------------------------------
+
+
+#------------------------------------------------------------------------------
+# FASE TRATAMENTO
+#-------------------------------------------------------------------------------
+# Tratamento das medias para FATURAMENTO, CUSTO, ATIVO, MAQUINAS E FINANCIAMENTO
+grupos_dados_relatorio <- dados_relatorio %>%
+  group_by(setor, uf) %>%
+  summarise(media_faturamento2016 = mean(faturamento2016, na.rm = TRUE),
+            media_faturamento2017 = mean(faturamento2017, na.rm = TRUE),
+            media_custo2016 = mean(custo2016, na.rm = T),
+            media_custo2017 = mean(custo2017, na.rm = T),
+            media_ativo2016 = mean(ativo2016, na.rm = T),
+            media_ativo2017 = mean(ativo2017, na.rm = T),
+            media_maquinas2016 = mean(maquinas2016, na.rm = T),
+            media_maquinas2017 = mean(maquinas2017, na.rm = T),
+            media_financiamento2016 = mean(financ2016, na.rm = T),
+            media_financiamento2017 = mean(financ2017, na.rm = T),
+            count = n())
+#-------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------
+# Tratamento dos totais setoriais para FATURAMENTO, CUSTO, ATIVO, MAQUINAS E FINANCIAMENTO
+grupos_totais_setoriais <- dados_relatorio %>%
+  group_by(setor) %>%
+  summarise(total_faturamento2016 = sum(faturamento2016, na.rm = TRUE),
+            total_faturamento2017 = sum(faturamento2017, na.rm = TRUE),
+            total_custo2016 = sum(custo2016, na.rm = T),
+            total_custo2017 = sum(custo2017, na.rm = T),
+            total_ativo2016 = sum(ativo2016, na.rm = T),
+            total_ativo2017 = sum(ativo2017, na.rm = T),
+            total_maquinas2016 = sum(maquinas2016, na.rm = T),
+            total_maquinas2017 = sum(maquinas2017, na.rm = T),
+            total_financiamento2016 = sum(financ2016, na.rm = T),
+            total_financiamento2017 = sum(financ2017, na.rm = T),
+            count = n())
+#-----------------------------------------------------------------------------------------
+
+
+
+# Tabela 4: Faturamento das empresas participantes do B+P por setor
+
+
+#--------------------FATURAMENTO 2016-------------------------------------------------
+
+## Figura 6) Faturamento Total 2016 por setor
+
+#Titulo: Faturamento total das empresas participantes em 2016
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_faturamento2016, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_faturamento2016), position=position_stack(1.1), color="black", size=3.5)+
+  labs(title = "",
+       y = "Faturamento total em 2016 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+
+## Figura 7) Faturamento medio 2016 por UF
+
+#Titulo: Faturamento medio das empresas participantes em 2016
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_faturamento2016, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Faturamento medio em 2016 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+#--------------------------------------------------------------------------------------
+
+
+
+
+
+#--------------------FATURAMENTO 2017-------------------------------------------------
+
+## Figura 8) Faturamento Total 2017 por setor
+
+#Titulo: Faturamento total das empresas participantes em 2017
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_faturamento2017, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_faturamento2017), position=position_stack(1.1), color="black", size=3.5)+
+  labs(title = "",
+       y = "Faturamento total em 2017 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+
+## Figura 9) Faturamento medio 2017 por UF
+
+#Titulo: Faturamento medio das empresas participantes em 2017
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_faturamento2017, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Faturamento medio em 2017 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+#--------------------------------------------------------------------------------------
+
+#---------------- Faturamento 2017 vs Faturamento 2016 --------------------------------
+## OBS: Base para gerar o gráfico
+#faturamento <- dados_relatorio %>%
+#  group_by(setor) %>%
+#  summarise(fat2017 = mean(faturamento2017, na.rm = TRUE),
+#            fat2016 = mean(faturamento2016, na.rm = TRUE))
+#faturamento2 <- data.frame(Ano = rep(c(2017,2016),each=4),
+#                          Setor = rep(faturamento$setor, times = 2),
+#                          Faturamento = c(faturamento$fat2017, faturamento$fat2016)
+#)
+#faturamento2$Ano <- as.character(faturamento2$Ano)
+
+## Figura 10) Compararivo do Faturamento médio de 2017 com Faturamento médio de 2016 por setor
+ggplot(faturamento2, aes(fill = Ano, y = Faturamento, x = Setor)) +
+  geom_bar(position = 'dodge', stat = 'Identity') +
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 3))
+#----------------------------------------------------------------------------------------
+
+#----------- Faturamento médio por trabalhador, comparativo entre 2017 e 2016 -----------
+## OBS: sub-dataset para gerar os gráficos:
+#dados_relatorio2 <- dados_relatorio %>%
+#  mutate(fat_trab_2016 = faturamento2016/n_trab_2016,
+#         fat_trab_2017 = faturamento2017/n_trab_2017) %>%
+#  group_by(setor) %>%
+#  summarise(media2016 = mean(fat_trab_2016, na.rm = TRUE),
+#            media2017 = mean(fat_trab_2017, na.rm = TRUE))
+#teste <- gather(dados_relatorio2, Ano, `Faturamento médio por trabalhador`,
+#                c(media2016:media2017), factor_key = T)
+#teste$Ano <- str_extract(teste$Ano, '[0-9]{4}')
+
+## Figura 11) Comparativo do Faturamento médio por trabalhador entre 2017 e 2016 por setor
+ggplot(teste, aes(fill = Ano, y = `Faturamento médio por trabalhador`, x = setor)) +
+  geom_bar(position = 'dodge', stat = 'Identity') +
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0))
+
+
+
+#-------------fim faturamento----------------------------------------------------------
+
+
+
+
+
+
+#Tabela 5: Custo médio das empresas participantes do B+P por setor
+
+
+#--------------------CUSTO 2016-------------------------------------------------
+
+## Figura 10) Custo total das empresas participantes no ano de 2016
+#Titulo: Custo total das empresas participantes em 2016
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_custo2016, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_custo2016), position=position_stack(1.07), color="black", size=3.5)+
+  labs(title = "",
+       y = "Custo total em 2016 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+## Figura 11) Custo mEdio das empresas participantes no ano de 2016
+
+#Titulo: Custo medio das empresas participantes em 2016
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_custo2016, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Custo medio em 2016 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+#--------------------------------------------------------------------------------------
+
+
+
+
+#--------------------CUSTO 2017-------------------------------------------------
+## Figura 12) Custo total das empresas participantes no ano de 2017
+#Titulo: Custo total das empresas participantes em 2017
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_custo2017, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_custo2017), position=position_stack(1.1), color="black", size=3.5)+
+  labs(title = "",
+       y = "Custo total em 2017 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+
+
+## Figura 13) Custo medio das empresas participantes no ano de 2017
+#Titulo: Custo medio das empresas participantes em 2017
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_custo2017, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Custo medio em 2017 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+#--------------------------------------------------------------------------------------
+#---------fim custo-------------------------------------------------------------------
+
+
+
+
+
+#---------------------ATIVO 2016------------------------------------------------
+
+## Figura 14) Ativo total estimado das empresas participantes no ano de 2016
+#Titulo: Ativo total das empresas participantes em 2016
+
+#Truncando o valor do ativo para controlar as casas decimais
+grupos_totais_setoriais$total_ativo2016  <- round(grupos_totais_setoriais$total_ativo2016)
+
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_ativo2016, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_ativo2016), position=position_stack(1.1), color="black", size=3.5)+
+  labs(title = "",
+       y = "Ativo total em 2016 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+
+
+## Figura 15) Ativo medio das empresas participantes no ano de 2016
+#Titulo: Ativo medio das empresas participantes em 2016
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_ativo2016, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Ativo medio em 2016 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  theme_bw()+
+  scale_fill_grey(start = 0, end = .75)+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")
+
+#-------------------------------------------------------------------------------
+
+
+
+#---------------------ATIVO 2017------------------------------------------------
+## Figura 16) Ativo total estimado das empresas participantes no ano de 2017
+
+
+#Truncando o valor do ativo para controlar as casas decimais
+grupos_totais_setoriais$total_ativo2017  <- round(grupos_totais_setoriais$total_ativo2017)
+
+#Titulo: Ativo total das empresas participantes em 2017
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_ativo2017, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_ativo2017), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "",
+       y = "Ativo total em 2017 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ '))+
+  theme(legend.position="bottom")+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()
+
+
+
+
+## Figura 17) Ativo medio das empresas participantes no ano de 2017
+
+#Titulo: Ativo medio das empresas participantes em 2017
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_ativo2017, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Ativo medio em 2017 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ '))+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+#-------------------------------------------------------------------------------
+
+#-------fim ativo---------------------------------------------------------------
+
+
+
+
+
+
+
+#---------------------MAQUINAS 2016 PRECISA REVISAR------------------------------------------------
+## Figura 18: Valor total das máquinas dos participantes de 2016
+
+#Titulo: Valor total das maquinas dos participantes em 2016
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_maquinas2016, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_maquinas2016), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "",
+       y = "Valor total maquinas 2016 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ '))+
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+
+
+
+## Figura 19: Valor medio das máquinas dos participantes de 2016
+
+#Titulo: Valor medio das maquinas dos participantes em 2016
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_maquinas2016, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Valor medio maquinas 2016 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+#-------------------------------------------------------------------------------
+
+
+
+
+#---------------------MAQUINAS 2017 PRECISA REVISAR------------------------------------------------
+## Figura 20) Valor total das máquinas dos participantes de 2017
+
+#Titulo: Valor total das maquinas dos participantes em 2017
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_maquinas2017, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_maquinas2017), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "",
+       y = "Valor total maquinas 2017 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+
+
+
+## Figura 21) Valor medio das máquinas dos participantes de 2017
+
+#Titulo: Valor medio das maquinas dos participantes em 2017
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_maquinas2017, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Valor medio maquinas 2017 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+
+#-------------------------------------------------------------------------------
+
+#------fim maquinas-------------------------------------------------------------
+
+
+
+
+
+
+
+#---------------------FINANCIAMENTO 2016------------------------------------------------
+## Figura 22) Montantes totais de  financiamentos tomados em 2016
+
+#Titulo: Valor total financiado pelos participantes em 2016
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_financiamento2016, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_financiamento2016), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "",
+       y = "Valor total financiamentos 2016 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+
+
+
+## Figura 23) Montantes medios de  financiamentos tomados em 2016
+
+#Titulo: Valor medio financiado pelos participantes em 2016
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_financiamento2016, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Valor medio financiamentos 2016 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+#-------------------------------------------------------------------------------
+
+
+
+
+#---------------------FINANCIAMENTO 2017------------------------------------------------
+## Figura 24) Montantes médios de  financiamentos tomados em 2017
+
+#Titulo: Valor total financiado pelos participantes em 2017
+ggplot(grupos_totais_setoriais, aes(fill = setor, y = total_financiamento2017, x = setor))+ 
+  geom_bar(position = "stack", stat = "identity")+
+  geom_text(aes(label = total_financiamento2017), position=position_stack(0.5), color="white", size=3.5)+
+  labs(title = "",
+       y = "Valor total financiamentos 2017 (R$)",
+       x = "setor")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+
+
+
+## Figura 25) Montantes medios de  financiamentos tomados em 2017
+
+#Titulo: Valor medio financiado pelos participantes em 2017
+ggplot(grupos_dados_relatorio, aes(fill = setor, y = media_financiamento2017, x = uf))+ 
+  geom_bar(position = "dodge", stat = "identity")+
+  labs(title = "",
+       y = "Valor medio financiamentos 2017 (R$)",
+       x = "Unidade da federacao")+
+  scale_y_continuous(labels = scales::dollar_format(prefix = 'R$ ')) +
+  labs(caption="FONTE: IPEA, Brasil mais Produtivo,
+       Questionario 1 (2018)")+
+  scale_fill_grey(start = 0, end = .75)+
+  theme_bw()+
+  theme(legend.position="bottom")
+#-------------------------------------------------------------------------------
+
+#-----fim financiamento---------------------------------------------------------
+
+
+
+#-----xxx-------xxx------------xxx----------------xxx---------------xxx--------
+
+
+
+#------------------------------------
+
+# ) OUTLIERS
+
+## OUTLIERS Faturamento 2017
+
+ggplot(dados_relatorio, 
+       aes(x = uf,  y = faturamento2017))+
+  geom_violin (fill = "cornflowerblue")+
+  geom_boxplot(width = .2, 
+               fill = "orange",
+               outlier.color = "orange",
+               outlier.size = 2) + 
+  scale_y_continuous(limits = c(0, 10000000), expand = c(0.3, 10))+
+  labs(title = "sobreposição boxplots em parcelas de violino",  x="UF", y="Faturamento 2017")
+
+
+
+## OUTLIERS Faturamento 2016
+
+ggplot(dados_relatorio, 
+       aes(x = uf,  y = faturamento2016))+
+  geom_boxplot(aes(fill = faturamento2016))
+
+#---------------------------------------
+
+
+
+
+
+#-------------------------
+# EXPLORANDO CORRELACOES
+#-------------------------
+
+# Grupos e Medias
+grupos_dados_relatorio <- dados_relatorio %>%
+  group_by(setor, porte) %>%
+  summarise(media_faturamento2016 = mean(faturamento2016, na.rm = TRUE),
+            media_faturamento2017 = mean(faturamento2017, na.rm = TRUE),
+            media_custo2016 = mean(custo2016, na.rm = T),
+            media_custo2017 = mean(custo2017, na.rm = T),
+            media_ativo2016 = mean(ativo2016, na.rm = T),
+            media_ativo2017 = mean(ativo2017, na.rm = T),
+            media_maquinas2016 = mean(maquinas2016, na.rm = T),
+            media_maquinas2017 = mean(maquinas2017, na.rm = T),
+            media_financiamento2016 = mean(financ2016, na.rm = T),
+            media_financiamento2017 = mean(financ2017, na.rm = T),
+            count = n())
+
+
+
+
+# -------------- BOX PLOTS -------------------
+
+#---------------------------------------------
+##              FATURAMENTOS
+#---------------------------------------------
+box_faturamento2016 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_faturamento2016))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Faturamento medio 2016 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+
+
+box_faturamento2017 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_faturamento2017))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Faturamento medio 2017 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+# Figura 26)  Boxplots faturamento medio 2016 e 2017
+
+##aranjando em grade
+grid.arrange(box_faturamento2016, box_faturamento2017, ncol = 1, nrow = 2)
+
+
+#----------------xxx------------------------------------------------------
+
+
+
+#---------------------------------------------
+##              CUSTOS
+#---------------------------------------------
+
+box_custo2016 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_custo2016))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Custo medio 2016 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+
+box_custo2017 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_custo2017))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Custo medio 2017 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+# Figura 27)  Boxplots custos medios 2016 e 2017
+
+##aranjando em grade
+grid.arrange(box_custo2016, box_custo2017, ncol = 1, nrow = 2)
+
+#--------------xxx-------------------------------------------
+
+
+
+
+#---------------------------------------------
+##                ATIVOS
+#---------------------------------------------
+
+box_ativo2016 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_ativo2016))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Ativo medio 2016 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+
+box_ativo2017 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_ativo2017))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Ativo medio 2017 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+# Figura 28)  Boxplots ativos medios 2016 e 2017
+
+##aranjando em grade
+grid.arrange(box_ativo2016, box_ativo2017, ncol = 1, nrow = 2)
+
+
+#-----------------xxx-----------------------------------------
+
+
+
+#---------------------------------------------
+##   MAQUINAS  REVISAR SETOR MOVELEIRO !!! 
+#---------------------------------------------
+
+box_maquinas2016 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_maquinas2016))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Media maquinas 2016 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+
+box_maquinas2017 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_maquinas2017))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Media maquinas 2017 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+# Figura 29)  Boxplots valor medio maquinas 2016 e 2017
+
+##aranjando em grade
+grid.arrange(box_maquinas2016, box_maquinas2017, ncol = 1, nrow = 2)
+
+
+#--------------xxx---------------------------------
+
+
+
+
+#---------------------------------------------
+##          FINANCIAMENTOS
+#---------------------------------------------
+
+box_financiamento2016 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_financiamento2016))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Media financiamento 2016 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+
+box_financiamento2017 <-  ggplot(grupos_dados_relatorio, aes(factor(setor), media_financiamento2017))+
+  geom_boxplot(aes(fill=factor(setor)))+
+  labs(y = "Media financiamento 2017 (R$)", x = "setor")+
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+
+# Figura 30)  Boxplots financiamentos medios 2016 e 2017
+
+##aranjando em grade
+grid.arrange(box_financiamento2016, box_financiamento2017, ncol = 1, nrow = 2)
+
+#----------------xxx---------------------------
+
+
+
+#---------------------
+# Outras Correlacoes
+#---------------------
+
+# Pearson
+
+ggcorr(grupos_dados_relatorio, method = c("everything", "pearson")) 
+
+
+# Correlacao1
+ggpairs(grupos_dados_relatorio, columns = 1:ncol(grupos_dados_relatorio), cardinality_threshold = 60, title="correlogram with ggpairs()") 
+
+
+# Correlacao2
+
+ggpairs(grupos_dados_relatorio, columns = 1:4, ggplot2::aes(colour = setor)) 
+
+
+# Correlacao3
+ggpairs(grupos_dados_relatorio, title="correlograma B+P", ggplot2::aes(colour = setor)) 

@@ -1,0 +1,36 @@
+q1_porte <- merge(q1_tratado, elegibilidade, by = "cnpj", all.x = T)
+
+library(openxlsx)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+write.xlsx(q1_porte, file = "q1_porte_parcial.xlsx")
+
+q1_porte_cnae <- merge(q1_porte, q1_cnpj_uf_setor_cnae, by = "cnpj", all.x = T)
+
+
+drop_na(q1_porte_cnae) %>%
+  ggplot(q1_porte_cnae, mapping = aes(fill = porte, y = setor, x = porte)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(title = "MÃ©dia de trabalhadores por Setor",
+       y="Numero medio de trabalhadores",
+       x = "Unidade da federaÃ§ao")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()+
+  coord_flip()
+
+
+#stacked
+drop_na(q1_porte_cnae) %>%
+ggplot(q1_porte_cnae, mapping = aes(fill = porte, y = porte, x = setor)) +
+  geom_bar(stat="identity")+
+  coord_flip()+
+  labs(title = "Porte setorial",
+       y="Setor",
+       x = "Porte (nº funcionarios)")+
+  theme_light()+
+  theme(axis.text.x = element_blank())
+
+save.image(file = 'porte_do_q1.RData')
